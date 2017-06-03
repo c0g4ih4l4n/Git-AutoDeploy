@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-var configFilePath := 'GitAutoDeploy.conf.json'
+const configFilePath = "GitAutoDeploy.conf.json"
 
 type config struct {
 	port         int
@@ -25,15 +25,15 @@ type repo struct {
 
 func GitAutoDeploy(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-    // get all urls
-    for url := range urls {
-        path, err = getMatchingPath(url)
-        pull(path)
-        deploy(path)
-    }
+	// get all urls
+	for url := range urls {
+		path, err = getMatchingPath(url)
+		pull(path)
+		deploy(path)
+	}
 }
 
-func parseRequest(r * http.Request) {
+func parseRequest(r *http.Request) {
 
 }
 
@@ -49,7 +49,7 @@ func getConfig(configPath string) config {
 
 }
 
-func pull(path string) error{
+func pull(path string) error {
 
 }
 
@@ -58,10 +58,10 @@ func deploy(path string) error {
 }
 
 func main() {
-    config := getConfig(configFilePath)
+	config := getConfig(configFilePath)
 	http.HandleFunc("/", GitAutoDeploy)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
-    if (err == nil) {
-        log.Fatal("Error: ", err)
-    }
+	if err == nil {
+		log.Fatal("Error: ", err)
+	}
 }
