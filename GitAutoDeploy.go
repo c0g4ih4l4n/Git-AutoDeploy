@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	//"reflect"
 )
 
 const configFilePath = "GitAutoDeploy.conf.json"
@@ -95,12 +96,20 @@ func getConfig(configPath string) config {
 
 	fmt.Printf("read %d bytes: %q\n", count, data[:count])
 
-	var t test_struct
+	//var t test_struct
 
-	err = json.Unmarshal(data[:count], &t)
+	var test1 map[string]interface{}
+
+	err = json.Unmarshal(data[:count], &test1)
 	check(err)
 
-	fmt.Printf("%+v", t)
+	fmt.Printf("\nResult convert : %+v", test1)
+
+	fmt.Printf("\n\n")
+
+	port := test1["port"].(float64)
+
+	fmt.Println("\n\nPort: ", port)
 
 	return result
 }
@@ -115,10 +124,10 @@ func deploy(path string) error {
 
 func main() {
 	fmt.Println("WebService - GitAutoDeploy Starting ... ")
-	config := getConfig(configFilePath)
+	getConfig(configFilePath)
 	http.HandleFunc("/", GitAutoDeploy)
 
-	fmt.Println(config)
+	// fmt.Println(config)
 
 	// config.port = 80
 	// fmt.Printf("GitAutoDeploy Listening At Port %v ...", config.port)
