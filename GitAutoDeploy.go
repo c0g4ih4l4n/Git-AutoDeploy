@@ -31,7 +31,7 @@ type test_struct struct {
 func GitAutoDeploy(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	fmt.Println(r.Form)
+	fmt.Println(r)
 
 	var t test_struct
 	for key, _ := range r.Form {
@@ -75,6 +75,22 @@ func getMatchingPath(url string) (string, error) {
 
 func getConfig(configPath string) config {
 	var result config
+
+	file, err := os.Open(configPath) // For read access.
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+
+	data := make([]byte, 100)
+	count, err := os.Read(data)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+
+	fmt.Printf("read %d bytes: %q\n", count, data[:count])
+
 	return result
 }
 
@@ -87,8 +103,14 @@ func deploy(path string) error {
 }
 
 func main() {
+	fmt.Println("WebService - GitAutoDeploy Starting ... ")
 	config := getConfig(configFilePath)
 	http.HandleFunc("/", GitAutoDeploy)
+
+	fmt.Println(config)
+
+	config.port = 80
+	fmt.Printf("GitAutoDeploy Listening At Port %v ...", config.port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
 	if err == nil {
 		log.Fatal("Error: ", err)
