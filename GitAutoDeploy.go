@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 const configFilePath = "GitAutoDeploy.conf.json"
@@ -25,7 +26,8 @@ type repo struct {
 //          -> loop all urls -> get path of each url -> pull -> deploy
 
 type test_struct struct {
-	Test string
+	key   string
+	value interface{}
 }
 
 func GitAutoDeploy(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +44,7 @@ func GitAutoDeploy(w http.ResponseWriter, r *http.Request) {
 			log.Println(err.Error())
 		}
 	}
-	log.Println(t.Test)
+	log.Println(t)
 
 	// var result map[string]interface{}
 
@@ -69,6 +71,12 @@ func getMatchingPath(url string) (string, error) {
 	return "", nil
 }
 
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 // func get config from Config file
 // given: config file represent by configPath
 // return: config
@@ -77,19 +85,22 @@ func getConfig(configPath string) config {
 	var result config
 
 	file, err := os.Open(configPath) // For read access.
-	if err != nil {
-		log.Fatal(err)
-		return nil
-	}
+	check(err)
 
-	data := make([]byte, 100)
-	count, err := os.Read(data)
+	data := make([]byte, 1000)
+	count, err := file.Read(data)
 	if err != nil {
 		log.Fatal(err)
-		return nil
 	}
 
 	fmt.Printf("read %d bytes: %q\n", count, data[:count])
+
+	var t test_struct
+
+	err = json.Unmarshal(data[:count], &t)
+	check(err)
+
+	fmt.Printf("%+v", t)
 
 	return result
 }
@@ -109,10 +120,10 @@ func main() {
 
 	fmt.Println(config)
 
-	config.port = 80
-	fmt.Printf("GitAutoDeploy Listening At Port %v ...", config.port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
-	if err == nil {
-		log.Fatal("Error: ", err)
-	}
+	// config.port = 80
+	// fmt.Printf("GitAutoDeploy Listening At Port %v ...", config.port)
+	// err := http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
+	// if err == nil {
+	// 	log.Fatal("Error: ", err)
+	// }
 }
