@@ -130,6 +130,10 @@ func deploy(path string) error {
 	return nil
 }
 
+func respond() error {
+	return nil
+}
+
 func main() {
 	fmt.Println("WebService - GitAutoDeploy Starting ... ")
 	var cfg config
