@@ -9,27 +9,30 @@ import (
 	//"reflect"
 )
 
-const configFilePath = "GitAutoDeploy.conf.json"
+const configFilePath = "conf.json"
 
+// hold config infomation
+// when get from configFile
 type config struct {
-	port         int
-	repositories []repo
+	port         float64
+	repositories []map[string]interface{}
 }
 
+// objective: replace interface{} in repositories
+// not done yet
 type repo struct {
-	url    string
-	path   string
-	deploy string
+	url  string
+	path string
+}
+
+// must delete this
+type test_struct struct {
+	test string
 }
 
 // serve func
 // flow: req -> parse request to get param (urls) ->
 //          -> loop all urls -> get path of each url -> pull -> deploy
-
-type test_struct struct {
-	key   string
-	value interface{}
-}
 
 func GitAutoDeploy(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -83,12 +86,18 @@ func check(e error) {
 // return: config
 
 func getConfig(configPath string) config {
-	var result config
+	var result config                      // hold result
+	var fileContent map[string]interface{} // hold file content when get read file
+	data := make([]byte, 1000)             /* hold data in fileConfig
+	value 1000 is len of slice (going to change it)
+	config file have length unknown and must loop to read all data */
 
-	file, err := os.Open(configPath) // For read access.
+	// open file
+	file, err := os.Open(configPath)
 	check(err)
 
-	data := make([]byte, 1000)
+	// open stream and read from file to data
+
 	count, err := file.Read(data)
 	if err != nil {
 		log.Fatal(err)
@@ -96,25 +105,23 @@ func getConfig(configPath string) config {
 
 	fmt.Printf("read %d bytes: %q\n", count, data[:count])
 
-	//var t test_struct
-
-	var test1 map[string]interface{}
-
-	err = json.Unmarshal(data[:count], &test1)
+	// convert data to fileContent
+	err = json.Unmarshal(data[:count], &fileContent)
 	check(err)
 
-	fmt.Printf("\nResult convert : %+v", test1)
+	result.port = fileContent["port"].(float64)
+	repositories := fileContent["repositories"].([]interface{})
 
-	fmt.Printf("\n\n")
-
-	port := test1["port"].(float64)
-
-	fmt.Println("\n\nPort: ", port)
+	for _, value := range repositories {
+		element := value.(map[string]interface{})
+		result.repositories = append(result.repositories, element)
+	}
 
 	return result
 }
 
-func pull(path string) error {
+func pull(path string, cfg config) error {
+
 	return nil
 }
 
