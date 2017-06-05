@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	//"reflect"
 )
 
@@ -103,7 +104,7 @@ func getConfig(configPath string) config {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("read %d bytes: %q\n", count, data[:count])
+	// fmt.Printf("read %d bytes: %q\n", count, data[:count])
 
 	// convert data to fileContent
 	err = json.Unmarshal(data[:count], &fileContent)
@@ -131,15 +132,23 @@ func deploy(path string) error {
 
 func main() {
 	fmt.Println("WebService - GitAutoDeploy Starting ... ")
-	getConfig(configFilePath)
+	var cfg config
+	cfg = getConfig(configFilePath)
 	http.HandleFunc("/", GitAutoDeploy)
 
-	// fmt.Println(config)
+	// fmt.Println(cfg)
 
-	// config.port = 80
-	// fmt.Printf("GitAutoDeploy Listening At Port %v ...", config.port)
-	// err := http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
-	// if err == nil {
-	// 	log.Fatal("Error: ", err)
-	// }
+	fmt.Printf("GitAutoDeploy Listening At Port %v ...", cfg.port)
+
+	// pass port into string
+	// string need to pass to ListenandServe
+	strPort := strconv.Itoa(int(cfg.port))
+	strPort = ":" + strPort
+
+	err := http.ListenAndServe(strPort, nil)
+	// err := http.ListenAndServe(":80", nil)
+	if err == nil {
+		log.Fatal("Error: ", err)
+	}
+
 }
