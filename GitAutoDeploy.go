@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	//"reflect"
 )
@@ -17,6 +19,7 @@ const configFilePath = "conf.json"
 type config struct {
 	port         float64
 	repositories []map[string]interface{}
+	deployPath   string
 }
 
 // objective: replace interface{} in repositories
@@ -27,21 +30,20 @@ type repo struct {
 }
 
 // must delete this
-type test_struct struct {
+type testStruct struct {
 	test string
 }
 
 // serve func
 // flow: req -> parse request to get param (urls) ->
 //          -> loop all urls -> get path of each url -> pull -> deploy
-
-func GitAutoDeploy(w http.ResponseWriter, r *http.Request) {
+func gitAutoDeploy(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	fmt.Println(r)
 
-	var t test_struct
-	for key, _ := range r.Form {
+	var t testStruct
+	for key := range r.Form {
 		log.Println(key)
 		//LOG: {"test": "that"}
 		err := json.Unmarshal([]byte(key), &t)
@@ -71,9 +73,14 @@ func parseRequest(r *http.Request) {
 
 }
 
-func getMatchingPath(url string) (string, error) {
+func getMatchingPath(url string, repositories []map[string]interface{}) (map[string]interface{}, error) {
 
-	return "", nil
+	for _, repository := range repositories {
+		if repository["url"] == url {
+			return repository, nil
+		}
+	}
+	return nil, nil
 }
 
 func check(e error) {
@@ -121,16 +128,46 @@ func getConfig(configPath string) config {
 	return result
 }
 
+//change directory and pull from origin
+//if pull failed , ...
 func pull(path string, cfg config) error {
+	changeDir := exec.Command("cd", path)
+	err := changeDir.Run()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	cmd := exec.Command("git", "pull")
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	fmt.Println("Pull success")
 
 	return nil
 }
 
-func deploy(path string) error {
+func deploy(path string, cfg config) error {
+	changeDir := exec.Command("cd", path)
+	changeDir.CombinedOutput()
+
+	cmd := exec.Command(cfg.deployPath)
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+	}
 	return nil
 }
 
 func respond() error {
+
 	return nil
 }
 
@@ -138,7 +175,7 @@ func main() {
 	fmt.Println("WebService - GitAutoDeploy Starting ... ")
 	var cfg config
 	cfg = getConfig(configFilePath)
-	http.HandleFunc("/", GitAutoDeploy)
+	http.HandleFunc("/", gitAutoDeploy)
 
 	// fmt.Println(cfg)
 
